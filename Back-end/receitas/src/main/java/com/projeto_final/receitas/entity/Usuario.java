@@ -20,7 +20,7 @@ public class Usuario implements Serializable {
     private String login;
     private String senha;
 
-    @OneToMany (mappedBy = "usuario",cascade = cascadeType.ALL, orphanRemoval = true)
+    @OneToMany (mappedBy = "usuario",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Favorito> favoritos = ArrayList<>();
 
     public Usuario(){}

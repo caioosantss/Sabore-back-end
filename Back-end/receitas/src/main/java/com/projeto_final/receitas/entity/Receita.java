@@ -34,7 +34,7 @@ public class Receita {
     private String img;
 
 
-    @OneToMany(mappedBy = "receita", cascade = Cascade.TypeALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "receita", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Favorito> favoritadaPor = new ArrayList<>();
 
     public Receita(){}
