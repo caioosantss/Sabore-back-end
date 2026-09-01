@@ -26,7 +26,7 @@ public class Receita {
     private String desc;
 
     @Column(name = "tempo", nullable = false)
-    private int tempo;
+    private Integer tempo;
 
     @Column(name = "url", nullable = false)
     private String img;

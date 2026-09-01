@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface receitaRepository extends JpaRepository<Receita, Long> {
-};
+}
