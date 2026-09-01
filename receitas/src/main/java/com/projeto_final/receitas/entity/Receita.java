@@ -9,9 +9,10 @@ import java.util.*;
 @Entity
 @Table(name = "receita")
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(of = "id")
 
 public class Receita {
 
