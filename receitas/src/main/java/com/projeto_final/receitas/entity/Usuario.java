@@ -20,20 +20,6 @@ public class Usuario implements Serializable {
     private String login;
     private String senha;
 
-    @OneToMany (mappedBy = "usuario",cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Favorito> favoritos = ArrayList<>();
-
-    public Usuario(){}
-
-    public List<Favorito> getFavoritos() {
-        return favoritos;
-    }
-
-    public void setFavoritos(List<Favorito> favoritos) {
-        this.favoritos = favoritos;
-    }
-
-
 
 }
 
