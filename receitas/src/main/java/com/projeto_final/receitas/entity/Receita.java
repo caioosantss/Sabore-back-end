@@ -2,9 +2,6 @@ package com.projeto_final.receitas.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.engine.internal.Cascade;
-
-import java.util.*;
 
 @Entity
 @Table(name = "receita")
@@ -13,7 +10,6 @@ import java.util.*;
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
-
 public class Receita {
 
     @Id
@@ -31,9 +27,6 @@ public class Receita {
     @Column(name = "tempo", nullable = false)
     private Integer tempo;
 
-    @Column(name = "url", nullable = false)
+    @Column(name = "url")
     private String img;
-
-    }
-
-
+}
