@@ -1,7 +1,7 @@
 package com.projeto_final.receitas.controller;
 
-import com.example.demo.entity.Administrador;
-import com.example.demo.service.AdministradorService;
+import com.projeto_final.receitas.entity.Administrador;
+import com.projeto_final.receitas.service.AdministradorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
