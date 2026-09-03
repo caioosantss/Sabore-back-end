@@ -1,7 +1,7 @@
 package com.projeto_final.receitas.controller;
 
 import com.projeto_final.receitas.entity.Usuario;
-import com.projeto_final.receitas.service.*;
+import com.projeto_final.receitas.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,15 +10,31 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/usuario")
+@RequestMapping(value = "/")
 public class UsuarioController {
+
+    private final UsuarioService service;
+
     @Autowired
+    public UsuarioController(UsuarioService service) {
+        this.service = service;
+    }
 
-    private UsuarioService service;
-
-    @PostMapping
+    @PostMapping(value = "/auth/register")
     public ResponseEntity<Usuario> create(@RequestBody Usuario obj) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(obj));
+    }
+
+    @PostMapping(value = "/auth/login")
+    public ResponseEntity<Usuario> login(@RequestBody Usuario obj) {
+
+        Usuario usuario = service.login(obj.getEmail(), obj.getPassword());
+
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(usuario);
     }
 
     @DeleteMapping(value = "/{id}")
@@ -36,7 +52,6 @@ public class UsuarioController {
     public ResponseEntity<List<Usuario>> getAll() {
         return ResponseEntity.ok().body(service.getAll());
     }
-
 
     @PutMapping(value = "/{id}")
 

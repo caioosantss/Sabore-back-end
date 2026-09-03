@@ -5,6 +5,7 @@ import lombok.*;
 import java.io.*;
 import java.util.*;
 
+@NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
 @Setter
@@ -16,9 +17,8 @@ public class Usuario implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String nome;
-    private String login;
-    private String senha;
-
+    private String name;
+    @Column(unique = true)
+    private String email;
+    private String password;
 }
-

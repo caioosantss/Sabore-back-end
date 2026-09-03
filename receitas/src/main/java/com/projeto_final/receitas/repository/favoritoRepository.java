@@ -8,15 +8,16 @@ import org.springframework.stereotype.Repository;
 import java.util.*;
 
 @Repository
-public interface favoritoRepository extends JpaRepository<Favorito, FavoritoId> {
+public interface FavoritoRepository
+        extends JpaRepository<Favorito, FavoritoId> {
 
     List<Favorito> findByUsuarioId(Long usuario_id);
 
-    boolean existsByUsuarioIdAndReceitaId( Long usuario_id, Long receita_id);
+    boolean existsByUsuarioIdAndReceitaId(
+            Long usuario_id,
+            Long receita_id);
 
-    void deleteByUsuarioIdAndReceitaId(Long usuario_id, Long receita_id);
-
-
-    List<Favorito> usuario_id(Long usuarioId);
-
+    void deleteByUsuarioIdAndReceitaId(
+            Long usuario_id,
+            Long receita_id);
 }
