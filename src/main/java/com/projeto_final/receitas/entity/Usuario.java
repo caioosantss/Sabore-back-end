@@ -1,5 +1,6 @@
 package com.projeto_final.receitas.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import java.io.*;
@@ -20,5 +21,6 @@ public class Usuario implements Serializable {
     private String name;
     @Column(unique = true)
     private String email;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 }

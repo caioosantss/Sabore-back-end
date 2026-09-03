@@ -1,6 +1,8 @@
 package com.projeto_final.receitas.controller;
 
+import com.projeto_final.receitas.dto.LoginResponse;
 import com.projeto_final.receitas.entity.Usuario;
+import com.projeto_final.receitas.security.JwtService;
 import com.projeto_final.receitas.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,10 +16,12 @@ import java.util.List;
 public class UsuarioController {
 
     private final UsuarioService service;
+    private final JwtService jwtService;
 
     @Autowired
-    public UsuarioController(UsuarioService service) {
+    public UsuarioController(UsuarioService service, JwtService jwtService) {
         this.service = service;
+        this.jwtService = jwtService;
     }
 
     @PostMapping(value = "/auth/register")
@@ -26,7 +30,7 @@ public class UsuarioController {
     }
 
     @PostMapping(value = "/auth/login")
-    public ResponseEntity<Usuario> login(@RequestBody Usuario obj) {
+    public ResponseEntity<LoginResponse> login(@RequestBody Usuario obj) {
 
         Usuario usuario = service.login(obj.getEmail(), obj.getPassword());
 
@@ -34,7 +38,9 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        return ResponseEntity.ok(usuario);
+        String token = jwtService.generateToken(usuario.getId(), usuario.getEmail());
+
+        return ResponseEntity.ok(new LoginResponse(token, usuario));
     }
 
     @DeleteMapping(value = "/{id}")
