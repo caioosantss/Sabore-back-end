@@ -12,9 +12,13 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/administrador")
 public class AdministradorController {
-    @Autowired
 
-    private AdministradorService service;
+    private final AdministradorService service;
+
+    @Autowired
+    public AdministradorController(AdministradorService service) {
+        this.service = service;
+    }
 
     @PostMapping
     public ResponseEntity<Administrador> create(@RequestBody Administrador obj) {

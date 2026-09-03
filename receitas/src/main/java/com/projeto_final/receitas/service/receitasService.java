@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @Service
 public class receitasService {
-
     @Autowired
     private receitaRepository repository;
 
@@ -59,6 +58,4 @@ public class receitasService {
             newObj.setImg(obj.getImg());
         }
     }
-
-
 }
