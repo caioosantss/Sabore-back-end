@@ -5,7 +5,10 @@
 1. Crie um projeto em <https://supabase.com>.
 2. **Storage → New bucket**: nome `receitas`, marque **Public bucket**.
    Sem isso as fotos sobem, mas o navegador não consegue exibi-las.
-3. **Settings → API**: copie a `service_role` key.
+3. **Project Settings → API Keys**: copie a chave **secreta** —
+   `sb_secret_…` nos painéis novos, ou `service_role` (começa com `eyJ`)
+   na aba Legacy. A chave *publishable* **não serve**: ela respeita RLS e
+   não escreve no Storage.
    Ela é secreta e fica **só no backend** — nunca em variável `NEXT_PUBLIC_`.
 4. Defina as variáveis:
 
@@ -17,6 +20,19 @@ SUPABASE_BUCKET=receitas
 
 Sem essas variáveis a API continua funcionando; só o envio de foto é
 recusado, com uma mensagem explicando o que falta.
+
+### Duas confusões comuns
+
+**Bucket ≠ projeto.** `SUPABASE_BUCKET` é o nome que aparece em
+*Storage → Buckets*, não o nome do projeto (que fica na barra superior).
+
+**`Invalid Compact JWS`** significa que a chave não foi reconhecida —
+e aparece igual para chave vazia, truncada ou em formato inesperado.
+O upload manda a chave nos headers `apikey` **e** `Authorization`,
+porque as chaves novas (`sb_secret_…`) só são aceitas no `apikey`,
+enquanto o `Authorization` sozinho tenta lê-las como JWT.
+Já `row-level security policy` quer dizer o contrário: a chave foi lida,
+mas é a publishable, que não tem permissão de escrita.
 
 ### Testando antes de mexer no Railway
 
