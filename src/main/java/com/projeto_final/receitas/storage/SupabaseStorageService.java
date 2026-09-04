@@ -96,10 +96,16 @@ public class SupabaseStorageService {
                 return url + "/storage/v1/object/public/" + bucket + "/" + nomeArquivo;
             }
 
+            // Repassa o motivo que o proprio Supabase devolveu. Sem isso a
+            // mensagem virava adivinhacao: "Bucket not found" e
+            // "Invalid Compact JWS" (chave do tipo errado) chegavam os dois
+            // como um HTTP 400 generico.
             throw new businessException(
                     "O Supabase recusou o envio da imagem (HTTP "
-                            + resposta.statusCode() + "). Verifique se o bucket '"
-                            + bucket + "' existe e está público.");
+                            + resposta.statusCode() + "): " + resumo(resposta.body())
+                            + " — confira SUPABASE_BUCKET (o bucket '" + bucket
+                            + "' precisa existir e ser público) e SUPABASE_SERVICE_KEY"
+                            + " (precisa ser a chave secreta, não a publishable).");
 
         } catch (IOException e) {
             throw new businessException(
@@ -109,6 +115,18 @@ public class SupabaseStorageService {
             Thread.currentThread().interrupt();
             throw new businessException("O envio da imagem foi interrompido.");
         }
+    }
+
+    /** Corpo de erro do Supabase, encurtado para caber na mensagem. */
+    private String resumo(String corpo) {
+
+        if (corpo == null || corpo.isBlank()) {
+            return "(sem detalhes)";
+        }
+
+        String limpo = corpo.replaceAll("\\s+", " ").trim();
+
+        return limpo.length() > 300 ? limpo.substring(0, 300) + "..." : limpo;
     }
 
     private void validar(MultipartFile arquivo) {
