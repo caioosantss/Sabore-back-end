@@ -6,11 +6,12 @@ import com.projeto_final.receitas.entity.Usuario;
 import com.projeto_final.receitas.exception.businessException;
 import com.projeto_final.receitas.exception.resourceNotFoundException;
 import com.projeto_final.receitas.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class FavoritoService {
@@ -19,7 +20,6 @@ public class FavoritoService {
     private final UsuarioRepository usuarioRepository;
     private final receitaRepository receitaRepository;
 
-    @Autowired
     public FavoritoService(
             FavoritoRepository favoritoRepository,
             UsuarioRepository usuarioRepository,
@@ -31,52 +31,57 @@ public class FavoritoService {
     }
 
     @Transactional
-    public Favorito favoritar(Long usuario_id, Long receita_id) {
+    public Favorito favoritar(Long usuarioId, Long receitaId) {
 
-        Usuario usuario = usuarioRepository.findById(usuario_id)
-                .orElseThrow(() ->
-                        new resourceNotFoundException(
-                                "Usuario não encontrado com ID: " + usuario_id));
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new resourceNotFoundException(
+                        "Usuário não encontrado com ID: " + usuarioId));
 
-        Receita receita = receitaRepository.findById(receita_id)
-                .orElseThrow(() ->
-                        new resourceNotFoundException(
-                                "Receita não encontrada com o ID: " + receita_id));
+        Receita receita = receitaRepository.findById(receitaId)
+                .orElseThrow(() -> new resourceNotFoundException(
+                        "Receita não encontrada com o ID: " + receitaId));
 
-        if (favoritoRepository.existsByUsuarioIdAndReceitaId(
-                usuario_id, receita_id)) {
-
-            throw new businessException(
-                    "Esta receita já está nos favoritos do usuário");
+        if (favoritoRepository.existsByUsuarioIdAndReceitaId(usuarioId, receitaId)) {
+            throw new businessException("Esta receita já está nos seus favoritos.");
         }
 
-        Favorito favorito = new Favorito(usuario, receita);
-
-        return favoritoRepository.save(favorito);
+        return favoritoRepository.save(new Favorito(usuario, receita));
     }
 
     @Transactional
-    public void desfavoritar(Long usuario_id, Long receita_id) {
+    public void desfavoritar(Long usuarioId, Long receitaId) {
 
-        if (!favoritoRepository.existsByUsuarioIdAndReceitaId(
-                usuario_id, receita_id)) {
-
-            throw new resourceNotFoundException(
-                    "Favorito não encontrado para remoção!");
+        if (!favoritoRepository.existsByUsuarioIdAndReceitaId(usuarioId, receitaId)) {
+            throw new resourceNotFoundException("Esta receita não está nos seus favoritos.");
         }
 
-        favoritoRepository.deleteByUsuarioIdAndReceitaId(
-                usuario_id, receita_id);
+        favoritoRepository.deleteByUsuarioIdAndReceitaId(usuarioId, receitaId);
     }
 
     @Transactional(readOnly = true)
-    public List<Favorito> listarFavoritoDoUsuario(Long usuario_id) {
+    public List<Favorito> listarFavoritoDoUsuario(Long usuarioId) {
 
-        usuarioRepository.findById(usuario_id)
-                .orElseThrow(() ->
-                        new resourceNotFoundException(
-                                "Usuario não encontrado com ID: " + usuario_id));
+        usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new resourceNotFoundException(
+                        "Usuário não encontrado com ID: " + usuarioId));
 
-        return favoritoRepository.findByUsuarioId(usuario_id);
+        return favoritoRepository.findByUsuarioId(usuarioId);
+    }
+
+    /**
+     * IDs das receitas favoritadas, usado para marcar o coracao na listagem.
+     * Usuario anonimo (id nulo) simplesmente nao tem favoritos.
+     */
+    @Transactional(readOnly = true)
+    public Set<Long> idsFavoritosDoUsuario(Long usuarioId) {
+
+        if (usuarioId == null) {
+            return Set.of();
+        }
+
+        return favoritoRepository.findByUsuarioId(usuarioId)
+                .stream()
+                .map(favorito -> favorito.getReceita().getId())
+                .collect(Collectors.toSet());
     }
 }

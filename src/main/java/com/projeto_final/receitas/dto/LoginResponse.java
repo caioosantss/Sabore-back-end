@@ -1,6 +1,8 @@
 package com.projeto_final.receitas.dto;
 
-import com.projeto_final.receitas.entity.Usuario;
-
-public record LoginResponse(String token, Usuario user) {
+/**
+ * Resposta do login. O papel vai junto para o front saber se mostra
+ * os botoes de gerenciar receitas.
+ */
+public record LoginResponse(String token, UserResponse user) {
 }
