@@ -30,8 +30,38 @@ ADMIN_EMAIL=admin@seudominio.com
 ADMIN_PASSWORD=uma-senha-boa
 ```
 
-Roda uma única vez: se o e-mail já existir, nada acontece. Depois de
-logado, esse admin pode criar outros por `POST /administrador`.
+Comportamento na subida:
+
+| Situação do e-mail | O que acontece |
+|---|---|
+| não existe | cria a conta já como administrador |
+| existe como usuário comum | **promove** a conta (mantém id, senha e favoritos) |
+| já é administrador | não faz nada |
+
+Na promoção a senha **não** é trocada: a conta continua entrando com a
+senha que já tinha, e `ADMIN_PASSWORD` é ignorada. Isso vale para o caso
+comum de você ter se cadastrado pela tela antes de virar admin.
+
+Depois de logado, esse admin pode criar outros por `POST /administrador`.
+
+### Promover alguém direto pelo banco
+
+Administrador herda de Usuario com estratégia JOINED, então ser admin é
+só ter a linha em `tb_administrador` com o mesmo id:
+
+```sql
+INSERT INTO tb_administrador (id)
+SELECT id FROM tb_usuario WHERE email = 'fulano@exemplo.com';
+```
+
+E para conferir quem é o quê:
+
+```sql
+SELECT u.id, u.email,
+       CASE WHEN a.id IS NULL THEN 'USER' ELSE 'ADMIN' END AS papel
+FROM tb_usuario u
+LEFT JOIN tb_administrador a ON a.id = u.id;
+```
 
 ## 3. Demais variáveis
 

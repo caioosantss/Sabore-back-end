@@ -1,6 +1,7 @@
 package com.projeto_final.receitas.config;
 
 import com.projeto_final.receitas.entity.Administrador;
+import com.projeto_final.receitas.entity.Usuario;
 import com.projeto_final.receitas.repository.AdministradorRepository;
 import com.projeto_final.receitas.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,13 +10,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
+import java.util.Optional;
 
 /**
- * Cria o primeiro administrador na subida da aplicacao.
+ * Garante que exista um administrador na subida da aplicacao.
  *
- * Sem isso ninguem conseguiria cadastrar receitas: as rotas de escrita exigem
- * um admin, e a rota que cria admin tambem exige um admin — um impasse.
- * Roda so uma vez; se o e-mail ja existir, nao faz nada.
+ * Sem isso ninguem conseguiria cadastrar receitas: as rotas de escrita
+ * exigem um admin, e a rota que cria admin tambem exige um admin — um
+ * impasse. Este e o unico caminho que quebra esse ciclo.
  */
 @Component
 public class AdminSeeder implements CommandLineRunner {
@@ -52,18 +54,36 @@ public class AdminSeeder implements CommandLineRunner {
             return;
         }
 
-        if (usuarioRepository.findByEmail(email).isPresent()) {
-            System.out.println("[AdminSeeder] Administrador ja existe: " + email);
+        Optional<Usuario> existente = usuarioRepository.findByEmail(email);
+
+        if (existente.isEmpty()) {
+            Administrador admin = new Administrador();
+            admin.setName(nome);
+            admin.setEmail(email);
+            admin.setPassword(senha);
+
+            administradorRepository.save(admin);
+
+            System.out.println("[AdminSeeder] Administrador criado: " + email);
             return;
         }
 
-        Administrador admin = new Administrador();
-        admin.setName(nome);
-        admin.setEmail(email);
-        admin.setPassword(senha);
+        Usuario usuario = existente.get();
 
-        administradorRepository.save(admin);
+        if (administradorRepository.existsById(usuario.getId())) {
+            System.out.println("[AdminSeeder] Ja e administrador: " + email);
+            return;
+        }
 
-        System.out.println("[AdminSeeder] Administrador criado: " + email);
+        // A conta existe como usuario comum. Promove em vez de ignorar:
+        // quem definiu ADMIN_EMAIL quis que essa conta fosse a administradora,
+        // e ignorar em silencio deixava a aplicacao sem nenhum admin.
+        // A senha da conta NAO e alterada — continua sendo a que ela ja tinha.
+        administradorRepository.promover(usuario.getId());
+
+        System.out.println(
+                "[AdminSeeder] Conta existente promovida a administrador: " + email
+                        + " (a senha continua sendo a que ela ja tinha, "
+                        + "ADMIN_PASSWORD nao a substitui)");
     }
 }
