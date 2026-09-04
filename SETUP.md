@@ -18,6 +18,17 @@ SUPABASE_BUCKET=receitas
 Sem essas variáveis a API continua funcionando; só o envio de foto é
 recusado, com uma mensagem explicando o que falta.
 
+### Testando antes de mexer no Railway
+
+```bash
+./scripts/testar-supabase.sh /caminho/para/uma/foto.jpg
+```
+
+O script confere o bucket, envia a imagem e verifica se ela abre
+publicamente — separando "Supabase mal configurado" de "aplicação com
+problema". A chave secreta é digitada de forma oculta: não vai para a
+tela nem para o histórico do shell.
+
 ## 2. Primeiro administrador
 
 As rotas de escrita de receita exigem um administrador, e a rota que cria
