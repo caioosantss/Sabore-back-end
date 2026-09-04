@@ -75,6 +75,7 @@ echo "   arquivo: $(basename "$FOTO")  tipo: $TIPO"
 
 CODIGO=$(curl -s -o /tmp/supa-resposta.txt -w "%{http_code}" --max-time 60 \
     -X POST "$URL/storage/v1/object/$BUCKET/$NOME" \
+    -H "apikey: $KEY" \
     -H "Authorization: Bearer $KEY" \
     -H "Content-Type: $TIPO" \
     -H "x-upsert: true" \
@@ -84,14 +85,19 @@ if [ "$CODIGO" -lt 200 ] || [ "$CODIGO" -ge 300 ]; then
     echo "   FALHOU (HTTP $CODIGO): $(cat /tmp/supa-resposta.txt)"
     echo
     case "$(cat /tmp/supa-resposta.txt)" in
-        *"Invalid Compact JWS"*|*"AccessDenied"*|*Unauthorized*)
-            echo "   -> Chave errada. Use a SECRETA, nao a publishable."
+        *"row-level security"*)
+            echo "   -> A chave foi reconhecida, mas nao tem permissao de escrita."
+            echo "      E a publishable. Use a SECRETA (sb_secret_... ou service_role)."
+            ;;
+        *"Invalid Compact JWS"*)
+            echo "   -> A chave nao foi reconhecida: veio vazia ou truncada."
+            echo "      Confira com: echo \${#KEY}"
+            ;;
+        *"AccessDenied"*|*Unauthorized*)
+            echo "   -> Chave sem permissao. Use a SECRETA, nao a publishable."
             ;;
         *NoSuchBucket*|*"Bucket not found"*)
             echo "   -> Nome do bucket errado."
-            ;;
-        *"row-level security"*|*"violates"*)
-            echo "   -> A chave nao tem permissao. A secreta ignora RLS; a publishable nao."
             ;;
     esac
     rm -f /tmp/supa-resposta.txt

@@ -83,6 +83,14 @@ public class SupabaseStorageService {
             HttpRequest requisicao = HttpRequest.newBuilder()
                     .uri(URI.create(destino))
                     .timeout(Duration.ofSeconds(30))
+                    // Os dois headers de proposito, para aceitar os dois
+                    // formatos de chave do Supabase:
+                    //   - service_role (legada, um JWT "eyJ...") -> Authorization
+                    //   - sb_secret_... (nova)                   -> apikey
+                    // A rota Authorization tenta decodificar a chave como JWT e
+                    // devolve "Invalid Compact JWS" para o formato novo; o
+                    // header apikey entende os dois.
+                    .header("apikey", serviceKey)
                     .header("Authorization", "Bearer " + serviceKey)
                     .header("Content-Type", arquivo.getContentType())
                     .header("x-upsert", "true")
