@@ -1,8 +1,11 @@
 package com.projeto_final.receitas.ChaveComposta;
 
+import jakarta.persistence.Embeddable;
+
 import java.io.*;
 import java.util.Objects;
 
+@Embeddable
 public class FavoritoId implements Serializable {
     private Long usuarioId;
     private Long receitaId;
