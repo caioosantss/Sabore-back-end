@@ -122,53 +122,53 @@ sabore/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/projeto_final/receitas/
-│   │   │   ├── ReceitasApplication.java          # Classe principal
+│   │   │   ├── ReceitasApplication.java    
 │   │   │   │
 │   │   │   ├── config/
-│   │   │   │   ├── AdminSeeder.java              # Inicializa admin na subida
-│   │   │   │   ├── WebConfig.java                # Configurações CORS
-│   │   │   │   └── Securiryconfig.java           # ⭐ Config BCrypt
+│   │   │   │   ├── AdminSeeder.java 
+│   │   │   │   ├── WebConfig.java  
+│   │   │   │   └── Securiryconfig.java   
 │   │   │   │
 │   │   │   ├── controller/
-│   │   │   │   ├── receitaController.java        # Endpoints de receitas
-│   │   │   │   ├── UsuarioController.java        # Autenticação e usuários
-│   │   │   │   ├── FavoritoController.java       # Gerenciamento de favoritos
-│   │   │   │   └── AdministradorController.java  # Gestão de admins
+│   │   │   │   ├── receitaController.java 
+│   │   │   │   ├── UsuarioController.java        
+│   │   │   │   ├── FavoritoController.java      
+│   │   │   │   └── AdministradorController.java  #
 │   │   │   │
 │   │   │   ├── service/
-│   │   │   │   ├── receitasService.java          # Lógica de receitas
-│   │   │   │   ├── UsuarioService.java           # ⭐ Criptografia de senhas
-│   │   │   │   ├── FavoritoService.java          # Lógica de favoritos
-│   │   │   │   └── AdministradorService.java     # Gestão de admins
+│   │   │   │   ├── receitasService.java   
+│   │   │   │   ├── UsuarioService.java           
+│   │   │   │   ├── FavoritoService.java          
+│   │   │   │   └── AdministradorService.java  
 │   │   │   │
 │   │   │   ├── repository/
-│   │   │   │   ├── receitaRepository.java        # Queries customizadas
+│   │   │   │   ├── receitaRepository.java     
 │   │   │   │   ├── UsuarioRepository.java
 │   │   │   │   ├── FavoritoRepository.java
 │   │   │   │   └── AdministradorRepository.java
 │   │   │   │
 │   │   │   ├── entity/
-│   │   │   │   ├── Receita.java                  # Modelo de receita
-│   │   │   │   ├── Usuario.java                  # Modelo de usuário
-│   │   │   │   ├── Favorito.java                 # Associação usuário-receita
-│   │   │   │   └── Administrador.java            # Extensão de usuário
+│   │   │   │   ├── Receita.java              
+│   │   │   │   ├── Usuario.java               
+│   │   │   │   ├── Favorito.java              
+│   │   │   │   └── Administrador.java        
 │   │   │   │
 │   │   │   ├── dto/
-│   │   │   │   ├── RecipeResponse.java           # DTO de resposta (receita)
-│   │   │   │   ├── UserResponse.java             # DTO de resposta (usuário)
-│   │   │   │   └── LoginResponse.java            # DTO de resposta (login)
+│   │   │   │   ├── RecipeResponse.java       
+│   │   │   │   ├── UserResponse.java        
+│   │   │   │   └── LoginResponse.java      
 │   │   │   │
 │   │   │   ├── security/
-│   │   │   │   ├── JwtService.java               # Geração e validação JWT
-│   │   │   │   ├── JwtAuthFilter.java            # Filtro de autenticação
-│   │   │   │   ├── CurrentUser.java              # Contexto do usuário atual
-│   │   │   │   └── AuthenticatedUser.java        # Record do usuário autenticado
+│   │   │   │   ├── JwtService.java          
+│   │   │   │   ├── JwtAuthFilter.java       
+│   │   │   │   ├── CurrentUser.java         
+│   │   │   │   └── AuthenticatedUser.jav
 │   │   │   │
 │   │   │   ├── storage/
-│   │   │   │   └── SupabaseStorageService.java   # Integração com Supabase
+│   │   │   │   └── SupabaseStorageService.java  
 │   │   │   │
 │   │   │   ├── exception/
-│   │   │   │   ├── globalExceptionHandler.java   # Handler centralizado
+│   │   │   │   ├── globalExceptionHandler.java 
 │   │   │   │   ├── businessException.java
 │   │   │   │   ├── forbiddenException.java
 │   │   │   │   ├── unauthorizedException.java
@@ -176,15 +176,15 @@ sabore/
 │   │   │   │   └── standardError.java
 │   │   │   │
 │   │   │   └── ChaveComposta/
-│   │   │       └── FavoritoId.java               # Chave composta de favoritos
+│   │   │       └── FavoritoId.java
 │   │   │
 │   │   └── resources/
-│   │       └── application.properties            # Configurações da app
+│   │       └── application.properties
 │   │
 │   └── test/
 │       └── java/.../ReceitasApplicationTests.java
 │
-├── pom.xml                  # Dependências Maven (com Spring Security)
+├── pom.xml     # Dependências Maven (com Spring Security)
 ├── mvnw / mvnw.cmd          # Maven Wrapper
 ├── Dockerfile               # Para containerização
 ├── SETUP.md                 # Guia de configuração
@@ -842,27 +842,7 @@ URL gerada: `https://seu-servico.up.railway.app`
 
 URL gerada: `https://seu-projeto.vercel.app`
 
-### Checklist Pré-Deploy
 
-- [ ] BCrypt implementado ✅
-- [ ] JWT_SECRET é forte (64+ chars) ✅
-- [ ] CORS_ALLOWED_ORIGINS configurado corretamente ✅
-- [ ] MySQL password é seguro ✅
-- [ ] Nenhum console.log com dados sensíveis ✅
-- [ ] .env não commitado (.gitignore) ✅
-- [ ] HTTPS ativado em produção ✅
-
----
-
-## 📞 Contato e Suporte
-
-- **Autor**: [@caioosantss](https://github.com/caioosantss)
-- **Repositório**: [GitHub - Saborê](https://github.com/caioosantss/sabore)
-- **Issues**: [Report um bug](https://github.com/caioosantss/sabore/issues)
-- **Instituição**: SENAI
-- **Tipo**: Projeto Final de Curso
-
----
 
 ## 📄 Licença
 
@@ -870,19 +850,11 @@ Este projeto está licenciado sob a Licença MIT.
 
 ---
 
-## 🎉 Agradecimentos
 
-- **SENAI** - Por fornecer estrutura e mentoria
-- **Spring Boot Community** - Excelente framework
-- **BCrypt** - Algoritmo seguro de hashing
-- **Railway & Vercel** - Plataformas de deploy
-- **Supabase** - Storage confiável
-
----
 
 <div align="center">
 
-**Desenvolvido com ❤️ e Segurança em Primeiro Lugar**
+**Desenvolvido como projeto final de meu curso de qualificação como programador back-end**
 
 *Saborê - Receitas que aproximam*
 
