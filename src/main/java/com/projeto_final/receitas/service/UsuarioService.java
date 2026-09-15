@@ -7,6 +7,8 @@ import com.projeto_final.receitas.exception.unauthorizedException;
 import com.projeto_final.receitas.repository.AdministradorRepository;
 import com.projeto_final.receitas.repository.UsuarioRepository;
 import com.projeto_final.receitas.security.AuthenticatedUser;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,12 +21,15 @@ public class UsuarioService {
 
     private final UsuarioRepository repository;
     private final AdministradorRepository administradorRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UsuarioService(
             UsuarioRepository repository,
-            AdministradorRepository administradorRepository) {
+            AdministradorRepository administradorRepository, PasswordEncoder passwordEncoder) {
+
         this.repository = repository;
         this.administradorRepository = administradorRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -40,6 +45,7 @@ public class UsuarioService {
 
         obj.setId(null);
         obj.setName(obj.getName().trim());
+        obj.setPassword(passwordEncoder.encode(obj.getPassword()));
         obj.setEmail(email);
 
         return repository.save(obj);
@@ -52,14 +58,16 @@ public class UsuarioService {
             throw new unauthorizedException("Informe e-mail e senha.");
         }
 
-        Optional<Usuario> usuario =
-                repository.findByEmail(email.trim().toLowerCase(Locale.ROOT));
+        String emailNormalizado = email.trim().toLowerCase(Locale.ROOT);
 
-        if (usuario.isPresent() && senha.equals(usuario.get().getPassword())) {
+        Optional<Usuario> usuario = repository.findByEmail(emailNormalizado);
+
+        if (usuario.isPresent() &&
+            passwordEncoder.matches(senha, usuario.get().getPassword())) {
+
             return usuario.get();
         }
 
-        // Mensagem unica de proposito: nao revela se o e-mail existe.
         throw new unauthorizedException("E-mail ou senha incorretos.");
     }
 
