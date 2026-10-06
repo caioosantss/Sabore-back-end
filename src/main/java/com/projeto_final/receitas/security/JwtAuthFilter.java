@@ -5,16 +5,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
-/**
- * Le o cabecalho Authorization e, quando o token e valido, guarda o usuario
- * como atributo da requisicao. Nao bloqueia ninguem: rotas publicas seguem
- * funcionando sem token e quem exige login usa o CurrentUser.
- */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
@@ -41,6 +40,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             if (user != null) {
                 request.setAttribute(ATTRIBUTE, user);
+
+                var authentication = new UsernamePasswordAuthenticationToken(
+                        user, null,
+                        List.of(new SimpleGrantedAuthority(
+                                user.isAdmin() ? "ROLE_ADMIN" : "ROLE_USER")));
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
 
@@ -49,7 +55,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        // O preflight do CORS nunca carrega Authorization; deixar passar direto.
         return "OPTIONS".equalsIgnoreCase(request.getMethod());
     }
 }
