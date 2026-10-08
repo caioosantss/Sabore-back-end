@@ -6,24 +6,19 @@ import com.projeto_final.receitas.repository.AdministradorRepository;
 import com.projeto_final.receitas.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 import java.util.Optional;
 
-/**
- * Garante que exista um administrador na subida da aplicacao.
- *
- * Sem isso ninguem conseguiria cadastrar receitas: as rotas de escrita
- * exigem um admin, e a rota que cria admin tambem exige um admin — um
- * impasse. Este e o unico caminho que quebra esse ciclo.
- */
 @Component
 public class AdminSeeder implements CommandLineRunner {
 
     private final AdministradorRepository administradorRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private final String nome;
     private final String email;
@@ -32,12 +27,14 @@ public class AdminSeeder implements CommandLineRunner {
     public AdminSeeder(
             AdministradorRepository administradorRepository,
             UsuarioRepository usuarioRepository,
+            PasswordEncoder passwordEncoder,
             @Value("${app.admin.name:Administrador}") String nome,
-            @Value("${app.admin.email:}") String email,
-            @Value("${app.admin.password:}") String senha) {
+            @Value("${app.admin.email}") String email,
+            @Value("${app.admin.password}") String senha) {
 
         this.administradorRepository = administradorRepository;
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
         this.nome = nome;
         this.email = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
         this.senha = senha == null ? "" : senha;
@@ -60,7 +57,7 @@ public class AdminSeeder implements CommandLineRunner {
             Administrador admin = new Administrador();
             admin.setName(nome);
             admin.setEmail(email);
-            admin.setPassword(senha);
+            admin.setPassword(passwordEncoder.encode(senha));
 
             administradorRepository.save(admin);
 
@@ -75,10 +72,6 @@ public class AdminSeeder implements CommandLineRunner {
             return;
         }
 
-        // A conta existe como usuario comum. Promove em vez de ignorar:
-        // quem definiu ADMIN_EMAIL quis que essa conta fosse a administradora,
-        // e ignorar em silencio deixava a aplicacao sem nenhum admin.
-        // A senha da conta NAO e alterada — continua sendo a que ela ja tinha.
         administradorRepository.promover(usuario.getId());
 
         System.out.println(
