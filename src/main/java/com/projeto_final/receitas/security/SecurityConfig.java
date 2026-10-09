@@ -1,5 +1,6 @@
 package com.projeto_final.receitas.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,12 +22,15 @@ import java.util.List;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter)
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            JwtAuthFilter jwtAuthFilter,
+            CorsConfigurationSource corsConfigurationSource)
             throws Exception {
 
         http
             .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -56,14 +60,21 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * CORS usado pelo Spring Security (roda ANTES do MVC, entao e esta
+     * configuracao que vale). As origens vem de app.cors.allowed-origins,
+     * a mesma propriedade do WebConfig, para existir uma unica fonte.
+     * Aceita curinga: https://*.vercel.app cobre producao e previews.
+     */
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.cors.allowed-origins}") String[] allowedOrigins) {
+
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173",      // front em dev (ajuste a porta)
-                "https://seu-front.com"));    // front em produção
+        config.setAllowedOriginPatterns(List.of(allowedOrigins));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
