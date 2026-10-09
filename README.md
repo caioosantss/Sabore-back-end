@@ -4,9 +4,39 @@
 
 ![Status](https://img.shields.io/badge/Status-Completo%20e%20Deployado-success)
 ![Java](https://img.shields.io/badge/Java-21-blue)
-![Spring%20Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-green)
-![Security](https://img.shields.io/badge/Security-BCrypt-brightgreen)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-green)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![Security](https://img.shields.io/badge/Security-BCrypt%20%2B%20JWT-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
+
+| | Link |
+|---|---|
+| 🌐 **Aplicação (Front-end)** | https://sabore-gamma.vercel.app/ |
+| ⚙️ **API (Back-end)** | https://sabore-back-end.onrender.com |
+| 💻 **Repositório do Front-end** | https://github.com/caioosantss/sabore-front-end |
+| 💻 **Repositório do Back-end** | https://github.com/caioosantss/Sabore-back-end |
+
+> ⏳ **Aviso:** o back-end roda no plano gratuito do Render. Se ficar um tempo sem receber acessos, a primeira requisição pode levar cerca de 50 segundos para responder. Um monitor no UptimeRobot (veja [Monitoramento](#-monitoramento)) ajuda a reduzir isso.
+
+---
+
+## 📋 Sumário
+
+1. [Sumário Executivo](#-sumário-executivo)
+2. [Funcionalidades](#-principais-funcionalidades)
+3. [Arquitetura e Infraestrutura](#-arquitetura-e-infraestrutura)
+4. [Estrutura do Projeto](#-estrutura-do-projeto)
+5. [Segurança: BCrypt e JWT](#-segurança-bcrypt-e-jwt)
+6. [Banco de Dados](#-banco-de-dados---schema)
+7. [Variáveis de Ambiente](#-variáveis-de-ambiente)
+8. [Endpoints da API](#-endpoints-da-api)
+9. [Autenticação, CORS e Níveis de Acesso](#-autenticação-cors-e-níveis-de-acesso)
+10. [Como Executar Localmente](#-como-executar-localmente)
+11. [Deploy em Produção](#-deploy-em-produção)
+12. [Monitoramento](#-monitoramento)
+13. [Testes](#-testes)
+14. [Problemas Encontrados e Resolvidos](#-problemas-encontrados-e-resolvidos)
+15. [Melhorias e Roadmap](#-melhorias-implementadas)
 
 ---
 
@@ -18,7 +48,7 @@
 Criar uma experiência intuitiva e responsiva para descoberta de receitas, permitindo personalização através de favoritos e oferecendo filtros eficientes por categoria, tempo de preparo e popularidade.
 
 ### 🔐 Segurança em Primeiro Lugar
-A aplicação implementa **criptografia BCrypt** para proteção de senhas, garantindo que as credenciais dos usuários sejam armazenadas de forma segura e nunca em texto puro.
+As senhas são protegidas com **BCrypt** (nunca ficam em texto puro no banco) e as rotas protegidas usam **JWT** com controle de acesso por perfil (`USER` e `ADMIN`).
 
 ---
 
@@ -27,12 +57,12 @@ A aplicação implementa **criptografia BCrypt** para proteção de senhas, gara
 ### 👤 Para Usuários Não Autenticados
 - 👀 Visualizar receitas em destaque
 - 🔍 Explorar todas as receitas disponíveis
-- 📝 Criar conta (Cadastro com senha criptografada)
+- 📝 Criar conta (cadastro com senha criptografada)
 - 🔐 Fazer login seguro
 
 ### ❤️ Para Usuários Autenticados
 - **Favoritos** - Salvar receitas que você ama
-- **Queridinhos** - Acessar destaques da semana (mais favoritadas)
+- **Queridinhos** - Destaques da semana (receitas mais favoritadas)
 - **Receitas Rápidas** - Filtrar receitas de até 30 minutos
 - **Receitas Salgadas** - Explorar pratos principais e acompanhamentos
 - **Receitas Doces** - Encontrar sobremesas e doces
@@ -46,129 +76,137 @@ A aplicação implementa **criptografia BCrypt** para proteção de senhas, gara
 
 ---
 
-## 🏗️ Arquitetura Técnica
-
-### Stack Tecnológico
+## 🏗️ Arquitetura e Infraestrutura
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                       SABORÊ - Arquitetura                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  Frontend                Backend                  Banco      │
-│  ┌────────────┐        ┌──────────────┐       ┌─────────┐   │
-│  │  Next.js   │─HTTP──▶│ Spring Boot  │──────▶│ MySQL   │   │
-│  │  Vercel    │◀─────── │  Java 21     │       │ Seguro  │   │
-│  └────────────┘  JWT    │  + Spring    │       └─────────┘   │
-│                  (HS256) │  Security    │                     │
-│                         │  + BCrypt    │                     │
-│                         └──────────────┘                     │
-│                               │                              │
-│                               │                              │
-│                         ┌─────▼──────┐                      │
-│                         │  Supabase  │                      │
-│                         │  Storage   │                      │
-│                         │ (Imagens)  │                      │
-│                         └────────────┘                      │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
+                       ┌──────────────────────┐
+                       │      Navegador       │
+                       └──────────┬───────────┘
+                                  │ HTTPS
+                       ┌──────────▼───────────┐
+                       │   Front-end (Vercel) │
+                       │  Next.js + React     │
+                       └──────────┬───────────┘
+                                  │ HTTPS + JWT (Authorization: Bearer)
+                                  │ CORS liberado só para o front
+                       ┌──────────▼───────────┐        ┌───────────────┐
+ ┌──────────────┐ ping │  Back-end (Render)   │ upload │   Supabase    │
+ │ UptimeRobot  ├─────▶│  Spring Boot 4 / J21 ├───────▶│   Storage     │
+ │ (monitor)    │      │  Spring Security     │        │  (imagens)    │
+ └──────────────┘      │  + BCrypt + JWT      │        └───────────────┘
+                       └──────────┬───────────┘
+                                  │ JDBC (SSL)
+                       ┌──────────▼───────────┐
+                       │  MySQL (Aiven)       │
+                       └──────────────────────┘
 ```
 
-### Frontend
-- **Framework**: Next.js (React)
-- **Hospedagem**: Vercel (https://receitas-senai-frontend.vercel.app/)
-- **URL de Produção**: https://receitas-senai-frontend.vercel.app/
-- **Port**: 443 (HTTPS)
+### Onde cada parte está hospedada
 
-### Backend
+| Camada | Serviço | Observações |
+|--------|---------|-------------|
+| **Front-end** | **Vercel** | Deploy automático a cada push na `main` |
+| **Back-end** | **Render** | Deploy via `Dockerfile` (build Maven → JRE 21) |
+| **Banco de dados** | **Aiven (MySQL)** | Conexão com SSL; tabelas criadas pelo Hibernate (`ddl-auto=update`) |
+| **Imagens** | **Supabase Storage** | Bucket público `receitas` |
+| **Monitoramento** | **UptimeRobot** | Verifica a disponibilidade da API periodicamente |
+| **Testes de API** | **Postman** | Testes de endpoints do ambiente local à produção |
+
+### Front-end
+- **Framework**: Next.js 16 (React 19) com TypeScript
+- **Hospedagem**: Vercel (https://sabore-gamma.vercel.app/)
+- **Comunicação com a API**: `fetch` centralizado em `lib/api.ts`, usando a variável `NEXT_PUBLIC_API_URL`
+- **Sessão**: token JWT guardado no `localStorage` e enviado em `Authorization: Bearer {token}`
+
+### Back-end
 - **Framework**: Spring Boot 4.1.1
 - **Linguagem**: Java 21
-- **Build Tool**: Maven
-- **Segurança**: Spring Security + BCrypt
-- **Hospedagem**: Railway
-- **Port**: 8080 (HTTP local) / 443 (Railway/HTTPS)
-- **Padrão de Arquitetura**: MVC + Service Layer
+- **Build**: Maven (com Maven Wrapper)
+- **Segurança**: Spring Security + BCrypt + JWT (jjwt 0.12.6)
+- **Hospedagem**: Render (container Docker)
+- **Porta**: `8080` local; em produção o Render injeta a variável `PORT`
+- **Arquitetura**: MVC + Service Layer
 
 ### Banco de Dados
 - **SGBD**: MySQL
-- **Host**: Railway (produção) / localhost:3306 (local)
-- **Banco**: `receitas`
+- **Produção**: Aiven (MySQL gerenciado, conexão SSL)
+- **Local**: `localhost:3306`
 - **Estratégia**: JPA/Hibernate com `ddl-auto=update`
 
 ### Armazenamento de Arquivos
 - **Serviço**: Supabase Storage
 - **Bucket**: `receitas` (público)
-- **Tipos permitidos**: Imagens (JPG, PNG, WebP)
-- **Tamanho máximo**: 5MB por arquivo
-- **Uso**: Armazenar imagens das receitas
+- **Tipos permitidos**: JPG, PNG, WebP e GIF
+- **Tamanho máximo**: 5 MB por arquivo
 
 ### Autenticação & Autorização
 - **Padrão**: JWT (JSON Web Tokens)
 - **Algoritmo**: HS256 (HMAC SHA-256)
-- **Duração do Token**: 7 dias (604800000ms)
-- **Criptografia de Senhas**: BCrypt (strength 10)
-- **Roles**: USER, ADMIN
-- **Validação**: Header `Authorization: Bearer {token}`
+- **Duração do token**: 7 dias (604800000 ms)
+- **Senhas**: BCrypt (strength 10)
+- **Perfis**: `USER`, `ADMIN`
+- **Validação**: header `Authorization: Bearer {token}`
 
 ---
 
 ## 📁 Estrutura do Projeto
 
-### Backend (Java/Spring Boot)
+### Back-end (Java / Spring Boot)
 
 ```
-sabore/
-├── .mvn/                    # Maven Wrapper
+Sabore-back-end/
+├── .mvn/                        # Maven Wrapper
 ├── src/
 │   ├── main/
 │   │   ├── java/com/projeto_final/receitas/
-│   │   │   ├── ReceitasApplication.java    
+│   │   │   ├── ReceitasApplication.java
 │   │   │   │
 │   │   │   ├── config/
-│   │   │   │   ├── AdminSeeder.java 
-│   │   │   │   ├── WebConfig.java  
-│   │   │   │   └── Securiryconfig.java   
+│   │   │   │   ├── AdminSeeder.java        # Cria o 1º administrador na subida
+│   │   │   │   ├── WebConfig.java          # CORS do Spring MVC
+│   │   │   │   └── Securiryconfig.java     # Bean do PasswordEncoder (BCrypt)
 │   │   │   │
 │   │   │   ├── controller/
-│   │   │   │   ├── receitaController.java 
-│   │   │   │   ├── UsuarioController.java        
-│   │   │   │   ├── FavoritoController.java      
-│   │   │   │   └── AdministradorController.java  #
+│   │   │   │   ├── receitaController.java
+│   │   │   │   ├── UsuarioController.java  # /auth/* e /usuarios
+│   │   │   │   ├── FavoritoController.java
+│   │   │   │   └── AdministradorController.java
 │   │   │   │
 │   │   │   ├── service/
-│   │   │   │   ├── receitasService.java   
-│   │   │   │   ├── UsuarioService.java           
-│   │   │   │   ├── FavoritoService.java          
-│   │   │   │   └── AdministradorService.java  
+│   │   │   │   ├── receitasService.java
+│   │   │   │   ├── UsuarioService.java
+│   │   │   │   ├── FavoritoService.java
+│   │   │   │   └── AdministradorService.java
 │   │   │   │
 │   │   │   ├── repository/
-│   │   │   │   ├── receitaRepository.java     
+│   │   │   │   ├── receitaRepository.java
 │   │   │   │   ├── UsuarioRepository.java
 │   │   │   │   ├── FavoritoRepository.java
 │   │   │   │   └── AdministradorRepository.java
 │   │   │   │
 │   │   │   ├── entity/
-│   │   │   │   ├── Receita.java              
-│   │   │   │   ├── Usuario.java               
-│   │   │   │   ├── Favorito.java              
-│   │   │   │   └── Administrador.java        
+│   │   │   │   ├── Receita.java
+│   │   │   │   ├── Usuario.java
+│   │   │   │   ├── Favorito.java
+│   │   │   │   └── Administrador.java
 │   │   │   │
 │   │   │   ├── dto/
-│   │   │   │   ├── RecipeResponse.java       
-│   │   │   │   ├── UserResponse.java        
-│   │   │   │   └── LoginResponse.java      
+│   │   │   │   ├── RecipeResponse.java
+│   │   │   │   ├── UserResponse.java
+│   │   │   │   └── LoginResponse.java
 │   │   │   │
 │   │   │   ├── security/
-│   │   │   │   ├── JwtService.java          
-│   │   │   │   ├── JwtAuthFilter.java       
-│   │   │   │   ├── CurrentUser.java         
-│   │   │   │   └── AuthenticatedUser.jav
+│   │   │   │   ├── SecurityConfig.java     # Regras de acesso + CORS do Security
+│   │   │   │   ├── JwtService.java
+│   │   │   │   ├── JwtAuthFilter.java
+│   │   │   │   ├── CurrentUser.java
+│   │   │   │   └── AuthenticatedUser.java
 │   │   │   │
 │   │   │   ├── storage/
-│   │   │   │   └── SupabaseStorageService.java  
+│   │   │   │   └── SupabaseStorageService.java
 │   │   │   │
 │   │   │   ├── exception/
-│   │   │   │   ├── globalExceptionHandler.java 
+│   │   │   │   ├── globalExceptionHandler.java
 │   │   │   │   ├── businessException.java
 │   │   │   │   ├── forbiddenException.java
 │   │   │   │   ├── unauthorizedException.java
@@ -181,299 +219,275 @@ sabore/
 │   │   └── resources/
 │   │       └── application.properties
 │   │
-│   └── test/
-│       └── java/.../ReceitasApplicationTests.java
+│   └── test/java/.../ReceitasApplicationTests.java
 │
-├── pom.xml     # Dependências Maven (com Spring Security)
-├── mvnw / mvnw.cmd          # Maven Wrapper
-├── Dockerfile               # Para containerização
-├── SETUP.md                 # Guia de configuração
-├── README.md                # README original (backend)
-└── scripts/
-    └── testar-supabase.sh   # Script para validar Supabase
+├── Dockerfile                   # Build usado no deploy do Render
+├── pom.xml
+├── mvnw / mvnw.cmd
+├── SETUP.md
+├── .env.example
+└── scripts/testar-supabase.sh   # Valida a integração com o Supabase
+```
+
+### Front-end (Next.js / TypeScript)
+
+```
+sabore-front-end/
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx                 # Home: lista de receitas e filtros
+│   ├── login/page.tsx
+│   ├── cadastro/page.tsx
+│   └── globals.css
+├── components/
+│   ├── Header.tsx
+│   ├── Sidebar.tsx              # Descobrir, Favoritos, Queridinhos...
+│   ├── RecipeCard.tsx
+│   ├── RecipeDetail.tsx
+│   └── RecipeForm.tsx           # Criar/editar receita (admin)
+├── lib/
+│   ├── api.ts                   # Cliente HTTP da API
+│   └── auth-context.tsx         # Sessão / token JWT
+├── types/
+│   ├── auth.ts
+│   └── recipe.ts
+├── .env.example                 # Modelo das variáveis
+└── .env.local                   # Valores locais (NÃO vai para o Git)
 ```
 
 ---
 
-## 🔐 Segurança: Implementação de BCrypt
+## 🔐 Segurança: BCrypt e JWT
 
-### O Que é BCrypt?
+### O que é BCrypt?
 
-BCrypt é um algoritmo de hashing de senhas baseado no Blowfish que é resistente a força bruta. Características principais:
+BCrypt é um algoritmo de hash de senhas, baseado no Blowfish, projetado para ser resistente a ataques de força bruta:
 
-- ✅ **Salting automático**: Cada hash inclui um "salt" aleatório
-- ✅ **Adaptive**: Fica mais lento com o tempo, desafiando computadores mais rápidos
-- ✅ **Força configurável**: Strength 10 balanceia segurança com performance
-- ✅ **Padrão da indústria**: Usado por Google, Facebook, Twitter
+- ✅ **Salt automático**: cada hash inclui um valor aleatório, então senhas iguais geram hashes diferentes
+- ✅ **Custo adaptável**: o número de iterações pode ser aumentado conforme o hardware evolui
+- ✅ **Custo configurável**: strength 10 (2^10 = 1024 rodadas) equilibra segurança e desempenho
+- ✅ **Padrão amplamente adotado** para armazenamento de senhas
 
 ### Implementação no Saborê
 
-#### 1. **Configuração (Securiryconfig.java)**
+#### 1. Configuração (`Securiryconfig.java`)
 
 ```java
-package com.projeto_final.receitas.config;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-@Configuration 
+@Configuration
 public class Securiryconfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-        // Usa strength=10 por padrão (recomendado)
+        return new BCryptPasswordEncoder(); // strength 10 por padrão
     }
 }
 ```
 
-#### 2. **Criptografia na Criação de Usuário (UsuarioService)**
+#### 2. Criptografia na criação de usuário (`UsuarioService`)
 
 ```java
 @Transactional
 public Usuario create(Usuario obj) {
     validar(obj);
-    
+
     String email = obj.getEmail().trim().toLowerCase(Locale.ROOT);
-    
+
     if (repository.findByEmail(email).isPresent()) {
         throw new businessException("Este e-mail já está cadastrado.");
     }
-    
+
     obj.setId(null);
     obj.setName(obj.getName().trim());
-    // ⭐ Aqui: Senha é criptografada COM BCrypt
+    // ⭐ A senha é criptografada com BCrypt antes de ir ao banco
     obj.setPassword(passwordEncoder.encode(obj.getPassword()));
     obj.setEmail(email);
-    
+
     return repository.save(obj);
 }
 ```
 
 **O que acontece:**
-1. Usuário envia: `password = "minha_senha_123"`
-2. BCrypt gera um salt aleatório
-3. BCrypt aplica múltiplas iterações (2^strength = 2^10 = 1024 iterações)
-4. Resulta em algo como: `$2a$10$...64_caracteres...`
-5. Somente este hash é salvo no banco
+1. O usuário envia `password = "minha_senha_123"`
+2. O BCrypt gera um salt aleatório
+3. Aplica 2^10 rodadas de custo
+4. Resulta em algo como `$2a$10$...` (60 caracteres)
+5. Somente esse hash é salvo no banco
 
-#### 3. **Validação na Autenticação (UsuarioService)**
+#### 3. Validação no login (`UsuarioService`)
 
 ```java
 @Transactional(readOnly = true)
 public Usuario login(String email, String senha) {
-    
+
     if (email == null || senha == null) {
         throw new unauthorizedException("Informe e-mail e senha.");
     }
-    
+
     String emailNormalizado = email.trim().toLowerCase(Locale.ROOT);
-    
     Optional<Usuario> usuario = repository.findByEmail(emailNormalizado);
-    
+
     if (usuario.isPresent() &&
-        // ⭐ Aqui: Senha é verificada usando BCrypt.matches()
+        // ⭐ Compara a senha digitada com o hash salvo
         passwordEncoder.matches(senha, usuario.get().getPassword())) {
-        
         return usuario.get();
     }
-    
+
     throw new unauthorizedException("E-mail ou senha incorretos.");
 }
 ```
 
-**O que acontece:**
-1. Usuário envia: `senha = "minha_senha_123"`
-2. BCrypt aplica o mesmo hash com o salt do banco
-3. Compara resultado com o hash armazenado
-4. Se forem iguais → Login bem-sucedido
-5. **Importante**: Senha original NUNCA é armazenada
-
-### Fluxo de Segurança Completo
+### Fluxo completo de segurança
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    REGISTRO (Criar Conta)                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  User Input: "minhasenhaSuperSecreta123"                     │
-│              ↓                                                │
-│  validar(obj) - Verifica:                                    │
-│    - Nome não vazio ✓                                        │
-│    - Email contém @ ✓                                        │
-│    - Senha tem mínimo 6 chars ✓                              │
-│              ↓                                                │
-│  passwordEncoder.encode()                                    │
-│    1. Gera salt aleatório: $2a$10$1234567890...             │
-│    2. Aplica 2^10 (1024) iterações                           │
-│    3. Retorna hash único: $2a$10$...64_chars...             │
-│              ↓                                                │
-│  Banco de Dados:                                             │
-│    id | email          | password                            │
-│    1  | user@test.com  | $2a$10$...64_chars...             │
-│              ↓                                                │
-│  ✅ Resposta: "Usuário criado com sucesso"                   │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│                       LOGIN (Autenticação)                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  User Input: email="user@test.com",                          │
-│              password="minhasenhaSuperSecreta123"            │
-│              ↓                                                │
-│  repository.findByEmail() → Busca no banco                   │
-│              ↓                                                │
-│  passwordEncoder.matches(inputPassword, dbPassword)         │
-│    1. Extrai salt do hash do banco: $2a$10$...             │
-│    2. Aplica senha input com o MESMO salt                   │
-│    3. Gera novo hash                                         │
-│    4. Compara novo hash === hash do banco                   │
-│              ↓                                                │
-│  if (hashesIguais) {                                         │
-│    jwtService.generateToken(usuario.getId(), email, papel)  │
-│    return LoginResponse com token JWT                        │
-│  }                                                            │
-│              ↓                                                │
-│  ✅ Token JWT retornado ao usuário                           │
-│  ✅ Token armazenado em localStorage no frontend             │
-│              ↓                                                │
-│  Requisições subsequentes: Authorization: Bearer {token}    │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
+REGISTRO                                   LOGIN
+────────                                   ─────
+senha em texto puro (via HTTPS)            e-mail + senha (via HTTPS)
+        │                                          │
+validar(): nome, e-mail com @,             busca usuário por e-mail
+senha com mínimo de 6 caracteres                   │
+        │                                  passwordEncoder.matches(senha, hash)
+passwordEncoder.encode(senha)                      │
+        │                                  se confere → JwtService.generateToken()
+salva o hash no MySQL (Aiven)                      │
+        │                                  front guarda o token e envia
+responde 201 com os dados do usuário       Authorization: Bearer {token}
+(sem a senha)                                      │
+                                           JwtAuthFilter valida o token em cada
+                                           requisição (inválido → 401)
 ```
 
-### Adicionar Spring Security no pom.xml
-
-```xml
-<!-- Já incluído no projeto! -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-security</artifactId>
-</dependency>
-```
-
-Isso fornece automaticamente:
-- ✅ `PasswordEncoder` bean
-- ✅ `BCryptPasswordEncoder` implementação
-- ✅ Segurança de requisições HTTP
-- ✅ Proteção CSRF (desabilitada para API REST)
+> ℹ️ O pacote `spring-boot-starter-security` traz o `BCryptPasswordEncoder`, mas o **bean `PasswordEncoder` é declarado no projeto**, em `Securiryconfig.java`. O CSRF está desabilitado porque a API é stateless (JWT), sem cookies de sessão.
 
 ---
 
 ## 📊 Banco de Dados - Schema
 
-### Tabelas Principais
+O MySQL fica no **Aiven**. As tabelas são criadas e atualizadas pelo Hibernate (`spring.jpa.hibernate.ddl-auto=update`).
 
-#### `tb_usuario`
+A herança de `Usuario` usa a estratégia `JOINED`: `Administrador` é uma tabela própria ligada à de usuários pelo mesmo `id`.
+
 ```sql
+-- Usuários (comuns e administradores)
 CREATE TABLE tb_usuario (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  name VARCHAR(255),
-  password VARCHAR(255) NOT NULL,  -- ⭐ Agora armazena hash BCrypt
-  dtype VARCHAR(31)  -- Para herança: 'Usuario' ou 'Administrador'
+  id        BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name      VARCHAR(255),
+  email     VARCHAR(255) UNIQUE,
+  password  VARCHAR(255)          -- hash BCrypt (60 caracteres)
 );
 
--- Exemplo de senha armazenada:
--- password: $2a$10$pXpqWj6kfI/Vdq5T/h5hKe9x6z2Q1p3T5n7m9l0k8j6h4g2f1d0
-
--- Hash BCrypt é sempre 60 caracteres
-```
-
-#### `tb_administrador`
-```sql
+-- Administradores (herdam de tb_usuario)
 CREATE TABLE tb_administrador (
-  id BIGINT PRIMARY KEY,
+  id     BIGINT PRIMARY KEY,
+  token  VARCHAR(255),
   FOREIGN KEY (id) REFERENCES tb_usuario(id)
 );
-```
 
-#### `receita`
-```sql
+-- Receitas
 CREATE TABLE receita (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  nome VARCHAR(255) UNIQUE NOT NULL,
-  descricao VARCHAR(1000) NOT NULL,
-  tempo INT NOT NULL,
-  url VARCHAR(255),
-  categoria VARCHAR(50)
+  id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nome       VARCHAR(255) UNIQUE NOT NULL,
+  descricao  VARCHAR(1000) NOT NULL,
+  tempo      INT NOT NULL,           -- minutos
+  url        VARCHAR(255),           -- URL da imagem no Supabase
+  categoria  VARCHAR(255)            -- "doce" ou "salgada"
 );
-```
 
-#### `tb_favorito`
-```sql
+-- Favoritos (chave composta)
 CREATE TABLE tb_favorito (
-  usuario_id BIGINT,
-  receita_id BIGINT,
+  usuario_id       BIGINT,
+  receita_id       BIGINT,
+  data_adicionado  DATETIME,
   PRIMARY KEY (usuario_id, receita_id),
   FOREIGN KEY (usuario_id) REFERENCES tb_usuario(id),
   FOREIGN KEY (receita_id) REFERENCES receita(id)
 );
 ```
 
+> O SQL acima é ilustrativo (o Hibernate gera o DDL real a partir das entidades). A categoria é guardada em minúsculas e a API a devolve como `Doce` / `Salgada`.
+
 ---
 
 ## 🔑 Variáveis de Ambiente
 
-### Backend (Railway)
+### Back-end (Render)
+
+Configure em **Render → Environment**. Localmente, exporte no terminal ou defina nas configurações de execução da sua IDE.
 
 ```properties
-# ========== BANCO DE DADOS ==========
-MYSQLHOST=seu-host.mysql.railway.internal
-MYSQLPORT=3306
-MYSQLDATABASE=receitas
-MYSQLUSER=seu_usuario
-MYSQLPASSWORD=sua_senha_segura
+# ========== BANCO DE DADOS (Aiven MySQL) ==========
+# URL JDBC completa. O Aiven exige SSL.
+MYSQLPROD_URL=jdbc:mysql://<host>.aivencloud.com:<porta>/<banco>?sslMode=REQUIRED
+MYSQLUSERPROD_USER=seu_usuario
+MYSQLPROD_PASSWORD=sua_senha
 
 # ========== JWT ==========
-JWT_SECRET=sua_chave_super_secreta_e_longa_64_chars_minimo
-JWT_EXPIRATION_MS=604800000  # 7 dias em ms
+# OBRIGATÓRIO em produção: string longa e aleatória (32+ caracteres)
+JWT_SECRET=gere-uma-chave-longa-e-aleatoria
+JWT_EXPIRATION_MS=604800000          # 7 dias
 
 # ========== CORS ==========
-CORS_ALLOWED_ORIGINS=http://localhost:3000,https://receitas-senai-frontend.vercel.app
+# Origens autorizadas, separadas por vírgula, SEM barra no final.
+# Aceita curinga. Se não definida, vale: http://localhost:3000,https://*.vercel.app
+CORS_ALLOWED_ORIGINS=http://localhost:3000,https://sabore-gamma.vercel.app
 
 # ========== SUPABASE STORAGE ==========
 SUPABASE_URL=https://seu-projeto.supabase.co
-SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIs...
+SUPABASE_SERVICE_KEY=chave-service-role     # nunca exponha no front
 SUPABASE_BUCKET=receitas
 
 # ========== ADMIN INICIAL ==========
+# Obrigatórias: o administrador é criado na subida se o e-mail não existir
 ADMIN_NAME=Administrador
 ADMIN_EMAIL=admin@seudominio.com
 ADMIN_PASSWORD=senha_inicial_forte
 
-# ========== SERVER ==========
-PORT=8080
+# ========== SERVIDOR ==========
+# O Render injeta PORT sozinho; localmente o padrão é 8080
 ```
 
-### Frontend (Vercel)
+> ⚠️ Se `CORS_ALLOWED_ORIGINS` existir no painel do Render, ela **sobrescreve** o valor padrão do código.
+
+### Front-end (Vercel)
+
+| Variável | Valor | Tipo na Vercel |
+|----------|-------|----------------|
+| `NEXT_PUBLIC_API_URL` | `https://sabore-back-end.onrender.com` | **Config** |
+
+Pontos importantes:
+- Use a URL **sem barra no final**.
+- O prefixo **`NEXT_PUBLIC_` é obrigatório**: o Next.js só envia ao navegador as variáveis que começam com ele.
+- Como o valor fica embutido no código gerado no build, **mudar a variável exige um novo deploy**.
+- Na Vercel, escolha o tipo **Config** (e não *Secret*): a URL da API é pública e o valor precisa ser legível.
+- **Nunca** coloque senhas ou chaves secretas em variáveis `NEXT_PUBLIC_`.
+
+Para rodar localmente, copie o modelo e preencha:
 
 ```bash
-NEXT_PUBLIC_API_URL=https://seu-backend.up.railway.app
+cp .env.example .env.local
+# .env.local
+NEXT_PUBLIC_API_URL=http://localhost:8080
 ```
+
+> O Next.js lê o `.env.local`, e não o `.env.example`. O `.env.local` não vai para o Git.
 
 ---
 
 ## 🔗 Endpoints da API
 
 ### Base URL
-- **Produção**: `https://seu-backend.up.railway.app`
+- **Produção**: `https://sabore-back-end.onrender.com`
 - **Local**: `http://localhost:8080`
 
-### Autenticação (Com BCrypt)
+### Autenticação
 
-| Método | Endpoint | Descrição | Autenticação |
-|--------|----------|-----------|-------------|
-| `POST` | `/auth/register` | Criar conta (senha criptografada) | Pública |
-| `POST` | `/auth/login` | Fazer login (valida BCrypt) | Pública |
-| `GET` | `/auth/me` | Dados do usuário logado | ✅ Required |
+| Método | Endpoint | Descrição | Acesso |
+|--------|----------|-----------|--------|
+| `POST` | `/auth/register` | Criar conta (senha com BCrypt) | Pública |
+| `POST` | `/auth/login` | Fazer login (retorna o JWT) | Pública |
+| `GET` | `/auth/me` | Dados do usuário logado | 🔒 Logado |
 
-**Exemplo - Registrar com BCrypt**:
-```bash
+**Registrar**
+```http
 POST /auth/register
 Content-Type: application/json
 
@@ -482,366 +496,373 @@ Content-Type: application/json
   "email": "joao@example.com",
   "password": "minhasenhaSuperSegura123"
 }
-
-Response (201):
+```
+```json
+// 201 Created
 {
   "id": 1,
-  "email": "joao@example.com",
   "name": "João Silva",
-  "papel": "USER"
+  "email": "joao@example.com",
+  "role": "USER"
 }
-
-# No banco, a senha ficará assim:
-# $2a$10$pXpqWj6kfI/Vdq5T/h5hKe9x6z2Q1p3T5n7m9l0k8j6h4g2f1d0
 ```
 
-**Exemplo - Login com BCrypt**:
-```bash
+**Login**
+```http
 POST /auth/login
 Content-Type: application/json
 
 {
   "email": "joao@example.com",
-  "password": "minhasenhaSuperSegura123"  # Senha em texto puro (HTTPS)
+  "password": "minhasenhaSuperSegura123"
 }
-
-Response (200):
+```
+```json
+// 200 OK
 {
   "token": "eyJhbGciOiJIUzI1NiIs...",
-  "usuario": {
+  "user": {
     "id": 1,
-    "email": "joao@example.com",
     "name": "João Silva",
-    "papel": "USER"
+    "email": "joao@example.com",
+    "role": "USER"
   }
 }
-
-# Internamente:
-# 1. Backend busca o usuário por email
-# 2. Extrai hash do banco: $2a$10$pXpqWj6kfI/Vdq5T/h5hKe9x6z2Q1p3T5n7m9l0k8j6h4g2f1d0
-# 3. Valida com: passwordEncoder.matches("minhasenhaSuperSegura123", dbHash)
-# 4. BCrypt verifica e retorna true/false (nunca compara texto puro)
 ```
 
 ### Receitas
 
-| Método | Endpoint | Descrição | Autenticação |
-|--------|----------|-----------|-------------|
-| `GET` | `/recipes` | Listar receitas | Opcional |
-| `GET` | `/recipes/{id}` | Detalhe de uma receita | Opcional |
-| `POST` | `/recipes` | Criar receita | ✅ Admin |
-| `PUT` | `/recipes/{id}` | Atualizar receita | ✅ Admin |
-| `DELETE` | `/recipes/{id}` | Deletar receita | ✅ Admin |
+| Método | Endpoint | Descrição | Acesso |
+|--------|----------|-----------|--------|
+| `GET` | `/recipes` | Listar receitas (aceita `?filter=`) | Pública |
+| `GET` | `/recipes/{id}` | Detalhe de uma receita | Pública |
+| `POST` | `/recipes` | Criar receita | 🛡️ Admin |
+| `PUT` | `/recipes/{id}` | Atualizar receita | 🛡️ Admin |
+| `DELETE` | `/recipes/{id}` | Excluir receita | 🛡️ Admin |
+
+**Filtros de `GET /recipes?filter=...`**
+
+| Valor | Resultado | Menu no front |
+|-------|-----------|---------------|
+| *(vazio)* | Todas as receitas | Descobrir |
+| `favorites` | Favoritas do usuário logado | Favoritos |
+| `weekly` | Mais favoritadas | Queridinhos |
+| `quick` | Até 30 minutos | Receitas rápidas |
+| `savory` | Categoria salgada | Salgadas |
+| `sweet` | Categoria doce | Doces |
+
+**Formato de resposta de uma receita**
+```json
+{
+  "id": 1,
+  "title": "Bolo de chocolate",
+  "description": "Ingredientes... Modo de preparo...",
+  "imageUrl": "https://<projeto>.supabase.co/storage/v1/object/public/receitas/....webp",
+  "prepTime": 60,
+  "category": "Doce",
+  "favorite": false
+}
+```
+
+**Criar / editar receita** usa `multipart/form-data`:
+
+| Campo | Tipo | Obrigatório |
+|-------|------|-------------|
+| `nome` | texto | ✅ |
+| `desc` | texto | ✅ |
+| `tempo` | número (minutos) | ✅ |
+| `categoria` | texto (`doce` / `salgada`) | ❌ |
+| `imagem` | arquivo (JPG, PNG, WebP, GIF até 5 MB) | ❌ |
 
 ### Favoritos
 
-| Método | Endpoint | Descrição | Autenticação |
-|--------|----------|-----------|-------------|
-| `GET` | `/favoritos` | Listar favoritos do user | ✅ Required |
-| `POST` | `/favoritos/{receitaId}` | Adicionar aos favoritos | ✅ Required |
-| `DELETE` | `/favoritos/{receitaId}` | Remover dos favoritos | ✅ Required |
+| Método | Endpoint | Descrição | Acesso |
+|--------|----------|-----------|--------|
+| `GET` | `/favoritos` | Listar favoritos do usuário | 🔒 Logado |
+| `POST` | `/favoritos/{receitaId}` | Adicionar aos favoritos | 🔒 Logado |
+| `DELETE` | `/favoritos/{receitaId}` | Remover dos favoritos | 🔒 Logado |
+
+> O usuário dos favoritos sempre vem do **token JWT**, nunca da URL. Assim ninguém altera a lista de outra pessoa trocando um id.
+
+### Usuários e administração
+
+| Método | Endpoint | Descrição | Acesso |
+|--------|----------|-----------|--------|
+| `GET` | `/usuarios` | Listar todos os usuários | 🛡️ Admin |
+| `GET` / `PUT` / `DELETE` | `/usuarios/{id}` | Ver, editar ou excluir conta | 🔒 Dono da conta ou 🛡️ Admin |
+| `*` | `/administrador/**` | Gestão de administradores | 🛡️ Admin |
+| `GET` | `/actuator/health` | Verificação de saúde (usada no monitoramento) | Pública |
 
 ---
 
-## 🔒 Autenticação e Segurança (Detalhado)
+## 🔒 Autenticação, CORS e Níveis de Acesso
 
-### 1. Validação de Senha
+### 1. Validação de entrada (cadastro)
 
-Na criação de conta, valida:
+- ✅ Nome obrigatório
+- ✅ E-mail deve conter `@`
+- ✅ Senha com no mínimo 6 caracteres
+- ✅ E-mail normalizado (trim + minúsculas) e único
 
-```java
-private void validar(Usuario obj) {
-    // Nome obrigatório
-    if (obj.getName() == null || obj.getName().trim().isEmpty()) {
-        throw new businessException("O nome é obrigatório.");
-    }
-    
-    // Email válido
-    if (obj.getEmail() == null || !obj.getEmail().contains("@")) {
-        throw new businessException("Informe um e-mail válido.");
-    }
-    
-    // Senha mínimo 6 caracteres
-    if (obj.getPassword() == null || obj.getPassword().length() < 6) {
-        throw new businessException("A senha precisa ter pelo menos 6 caracteres.");
-    }
-}
-```
-
-### 2. Fluxo de Autenticação
+### 2. Estrutura do token JWT
 
 ```
-1. Usuário acessa a aplicação
-   ↓
-2. Opção: Login ou Registro
-   ↓
-3. Envia credenciais via HTTPS
-   ↓
-4. Backend valida com BCrypt
-   ↓
-5. Se válido → Gera JWT
-   ↓
-6. Retorna token ao frontend
-   ↓
-7. Frontend armazena em localStorage
-   ↓
-8. Em requisições posteriores, envia:
-   Authorization: Bearer {token}
-   ↓
-9. JwtAuthFilter valida o token
-   ↓
-10. Se válido → Requisição processada
-    Se inválido → 401 Unauthorized
-```
-
-### 3. Estrutura do Token JWT
-
-```
-Header: {
-  "alg": "HS256",
-  "typ": "JWT"
-}
+Header:  { "alg": "HS256", "typ": "JWT" }
 
 Payload: {
-  "sub": "1",                    // ID do usuário
-  "email": "usuario@example.com",
-  "papel": "USER",               // USER ou ADMIN
-  "iat": 1234567890,
-  "exp": 1234567890 + 604800000  // 7 dias
+  "sub": "usuario@example.com",   // e-mail
+  "userId": 1,
+  "role": "USER",                 // USER ou ADMIN
+  "iat": ...,
+  "exp": ...                      // 7 dias
 }
 
-Signature: HMAC-SHA256(secret)   // Assinado com JWT_SECRET
+Signature: HMAC-SHA256(JWT_SECRET)
 ```
 
-### 4. CORS (Cross-Origin Resource Sharing)
+### 3. CORS (Cross-Origin Resource Sharing)
 
-Configurado em `application.properties`:
+O navegador só deixa o front (Vercel) chamar a API (Render) se a API autorizar a origem. As origens permitidas vêm da propriedade `app.cors.allowed-origins`, alimentada pela variável `CORS_ALLOWED_ORIGINS`:
+
+```properties
+app.cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://*.vercel.app}
+```
+
+- O `SecurityConfig` lê essa propriedade e usa `setAllowedOriginPatterns`, que aceita curinga.
+- O curinga `https://*.vercel.app` cobre produção e os deploys de preview, mas também libera qualquer outro site `.vercel.app`. **Em produção, prefira o domínio exato:** `CORS_ALLOWED_ORIGINS=https://sabore-gamma.vercel.app`.
+- As origens não podem ter barra no final.
+- A API é chamada com `Authorization: Bearer` (sem cookies), por isso `allowCredentials` não é necessário.
+
+> 💡 O Postman e o `curl` **não aplicam CORS**. Uma API que funciona neles pode ainda assim ser bloqueada pelo navegador.
+
+### 4. Fluxo de autenticação
 
 ```
-CORS_ALLOWED_ORIGINS=http://localhost:3000,https://*.vercel.app
+1. Usuário faz login ou cadastro
+2. O front envia as credenciais via HTTPS
+3. O back valida a senha com BCrypt
+4. Se válido, gera um JWT e devolve ao front
+5. O front guarda o token (localStorage)
+6. Nas próximas chamadas: Authorization: Bearer {token}
+7. JwtAuthFilter valida o token
+8. Token ausente/inválido em rota protegida → 401; sem permissão → 403
 ```
 
-Protege:
-- ✅ Apenas origens autorizadas acessam a API
-- ✅ Curinga `*.vercel.app` cobre todos os deploys Vercel
-
-### 5. Validação de Entrada
-
-- ✅ Email deve conter @
-- ✅ Senha mínimo 6 caracteres
-- ✅ Nome não pode estar vazio
-- ✅ Normalização de email (trim + lowercase)
-
-### 6. Níveis de Acesso
+### 5. Níveis de acesso
 
 | Endpoint | Público | User | Admin |
-|----------|---------|------|-------|
-| GET /recipes | ✅ | ✅ | ✅ |
-| POST /recipes | ❌ | ❌ | ✅ |
-| PUT /recipes/{id} | ❌ | ❌ | ✅ |
-| DELETE /recipes/{id} | ❌ | ❌ | ✅ |
-| GET /favoritos | ❌ | ✅ | ✅ |
-| POST /favoritos | ❌ | ✅ | ✅ |
-| GET /usuarios | ❌ | ❌ | ✅ |
-| POST /administrador | ❌ | ❌ | ✅ |
+|----------|:------:|:----:|:-----:|
+| `GET /recipes`, `GET /recipes/{id}` | ✅ | ✅ | ✅ |
+| `POST/PUT/DELETE /recipes` | ❌ | ❌ | ✅ |
+| `GET/POST/DELETE /favoritos` | ❌ | ✅ | ✅ |
+| `GET /auth/me` | ❌ | ✅ | ✅ |
+| `GET /usuarios` | ❌ | ❌ | ✅ |
+| `GET/PUT/DELETE /usuarios/{id}` | ❌ | só a própria conta | ✅ |
+| `/administrador/**` | ❌ | ❌ | ✅ |
+| `GET /actuator/health` | ✅ | ✅ | ✅ |
 
 ---
 
-## 🚀 Como Instalar e Executar
+## 🚀 Como Executar Localmente
 
 ### Pré-requisitos
-- ✅ Java 21+
-- ✅ Maven 3.6+
-- ✅ MySQL 8.0+
-- ✅ Node.js 18+ e npm/yarn (para frontend)
+- Java 21+
+- Maven 3.6+ (ou o `./mvnw` do projeto)
+- MySQL 8.0+
+- Node.js 20+ e npm
 
-### Backend
+### Back-end
 
-#### 1. Clonar e navegar
 ```bash
-git clone https://github.com/caioosantss/sabore.git
-cd sabore
+git clone https://github.com/caioosantss/Sabore-back-end.git
+cd Sabore-back-end
 ```
 
-#### 2. Configurar variáveis de ambiente
+**1. Crie o banco**
+```sql
+CREATE DATABASE receitas;
+```
+
+**2. Defina as variáveis de ambiente** (o back-end não sobe sem as de banco e de admin)
 ```bash
-export MYSQLHOST=localhost
-export MYSQLPORT=3306
-export MYSQLDATABASE=receitas
-export MYSQLUSER=root
-export MYSQLPASSWORD=root
-export JWT_SECRET=minha-chave-super-secreta-minimo-64-chars
+export MYSQLPROD_URL="jdbc:mysql://localhost:3306/receitas"
+export MYSQLUSERPROD_USER=root
+export MYSQLPROD_PASSWORD=root
+export JWT_SECRET=uma-chave-longa-e-aleatoria-com-32-ou-mais-caracteres
 export CORS_ALLOWED_ORIGINS=http://localhost:3000
+export ADMIN_NAME=Administrador
 export ADMIN_EMAIL=admin@localhost.com
 export ADMIN_PASSWORD=admin123
+# opcional (upload de imagens):
+# export SUPABASE_URL=... SUPABASE_SERVICE_KEY=... SUPABASE_BUCKET=receitas
 ```
 
-#### 3. Criar banco de dados
-```bash
-mysql -u root -p
-mysql> CREATE DATABASE receitas;
-mysql> exit;
-```
-
-#### 4. Rodar o backend
+**3. Rode**
 ```bash
 ./mvnw clean install
 ./mvnw spring-boot:run
 ```
 
-Backend disponível em: `http://localhost:8080`
+API em `http://localhost:8080`.
+
+### Front-end
+
+```bash
+git clone https://github.com/caioosantss/sabore-front-end.git
+cd sabore-front-end
+npm install
+cp .env.example .env.local
+```
+
+Edite o `.env.local`:
+```
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
+
+```bash
+npm run dev
+```
+
+Aplicação em `http://localhost:3000`. Se alterar o `.env.local`, reinicie o servidor.
 
 ---
 
-## 📊 Comparação: Antes vs Depois
+## ☁️ Deploy em Produção
 
-### Antes (Texto Puro) ❌
-
-```
-Registro:
-- Senha: "minhasenhaSuperSegura123"
-- Banco: "minhasenhaSuperSegura123"  ← Qualquer pessoa com acesso ao BD consegue ler!
-
-Login:
-- Entrada: "minhasenhaSuperSegura123"
-- Comparação: string.equals(entrada, banco)  ← Simples concatenação
-- Risco: Se o BD vazar, todas as senhas são expostas
-```
-
-### Depois (BCrypt) ✅
+O fluxo de deploy usa três serviços independentes, que só se conectam em tempo de execução, pelas URLs:
 
 ```
-Registro:
-- Senha: "minhasenhaSuperSegura123"
-- Processamento: BCrypt (1024 iterações + salt aleatório)
-- Banco: "$2a$10$pXpqWj6kfI/Vdq5T/h5hKe9x6z2Q1p3T5n7m9l0k8j6h4g2f1d0"
-         (sempre 60 caracteres, diferente a cada execução)
-
-Login:
-- Entrada: "minhasenhaSuperSegura123"
-- Processamento: BCrypt.matches(entrada, banco)
-- Comparação: Hash temporário === Hash do banco
-- Risco: Mesmo com acesso ao BD, a senha ORIGINAL não pode ser recuperada
-- Força bruta: 2^10 = 1024 iterações tornam brute-force impraticável
+GitHub ──push──▶ Vercel (build do front)  ──┐
+GitHub ──push──▶ Render (build do Docker) ──┼─▶ navegador → Vercel → Render → Aiven
+Aiven (MySQL gerenciado, sempre ativo)    ──┘
 ```
+
+### 1. Banco de dados: Aiven
+1. Crie um serviço **MySQL** no Aiven.
+2. Pegue host, porta, banco, usuário e senha na tela de conexão.
+3. Monte a `MYSQLPROD_URL` com SSL: `jdbc:mysql://<host>:<porta>/<banco>?sslMode=REQUIRED`.
+4. Se o serviço tiver lista de IPs permitidos, libere o acesso do Render.
+
+### 2. Back-end: Render
+1. Crie um **Web Service** conectado ao repositório do back-end (linguagem **Docker**, usando o `Dockerfile` da raiz).
+2. Cadastre **todas** as variáveis da seção [Variáveis de Ambiente](#-variáveis-de-ambiente), incluindo um `JWT_SECRET` forte.
+3. A cada push na `main`, o Render refaz o build e publica.
+4. Confirme em `https://sabore-back-end.onrender.com/recipes` (deve devolver JSON).
+
+### 3. Front-end: Vercel
+1. Importe o repositório do front-end.
+2. Em **Settings → Environment Variables**, crie `NEXT_PUBLIC_API_URL` (tipo **Config**) com a URL do Render, sem barra no final.
+3. A cada push na `main`, a Vercel gera um novo deploy.
+
+### ⚠️ Cuidados no deploy
+- **Redeploy ≠ novo código.** O botão *Redeploy* da Vercel reconstrói **o mesmo commit** do deploy escolhido. Para publicar alterações, faça `git push`.
+- **A variável `NEXT_PUBLIC_*` é lida no build.** Mudou o valor? Gere um deploy novo.
+- **Atualize o domínio no CORS** do back-end se o endereço do front mudar.
+- **Plano gratuito do Render:** o serviço "dorme" após um período sem acessos. Veja a seção abaixo.
+
+---
+
+## 📡 Monitoramento
+
+O back-end é monitorado com o **UptimeRobot**:
+
+- Faz requisições periódicas à API e registra se ela está no ar.
+- Pode avisar (e-mail ou outro canal) quando o serviço fica indisponível.
+- Como gera tráfego constante, também ajuda a evitar que o plano gratuito do Render coloque o serviço para dormir, o que reduz o tempo da primeira resposta.
+
+A rota `GET /actuator/health` é pública e leve, adequada para esse tipo de verificação.
+
+---
+
+## 🧪 Testes
+
+### Testes de API com Postman
+
+Os endpoints foram testados com o **Postman** em todas as etapas do desenvolvimento:
+
+| Etapa | Ambiente | Base URL |
+|-------|----------|----------|
+| 1. Desenvolvimento | API e MySQL locais | `http://localhost:8080` |
+| 2. Produção | API no Render e banco no Aiven | `https://sabore-back-end.onrender.com` |
+| 3. Integração | Front na Vercel consumindo a API | `https://sabore-gamma.vercel.app/` |
+
+Roteiro de testes dos endpoints:
+
+1. `POST /auth/register` → cria a conta (201)
+2. `POST /auth/login` → retorna o `token`
+3. `GET /auth/me` com `Authorization: Bearer {token}` → dados do usuário
+4. `GET /recipes` (com e sem `?filter=`) → listagem
+5. `POST /recipes` (multipart), `PUT` e `DELETE` com token de **admin**
+6. Mesmas operações com token de **usuário comum** → deve responder 403
+7. `GET`, `POST` e `DELETE` em `/favoritos`
+8. Acesso sem token a rota protegida → 401
+
+> Dica: use uma variável de ambiente no Postman (`baseUrl`) para alternar entre local e produção sem editar cada requisição.
+
+> ℹ️ O Postman não aplica CORS. A integração com o navegador é validada na etapa 3.
+
+### Testes automatizados
+
+```bash
+./mvnw test
+```
+
+### Teste manual com curl
+
+```bash
+BASE=https://sabore-back-end.onrender.com
+
+# 1. Registrar
+curl -X POST $BASE/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Teste User","email":"teste@example.com","password":"testeSenha123"}'
+
+# 2. Login (guarde o token da resposta)
+curl -X POST $BASE/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@example.com","password":"testeSenha123"}'
+
+# 3. Rota protegida
+curl -H "Authorization: Bearer SEU_TOKEN" $BASE/auth/me
+```
+
+---
+
+## 🐛 Problemas Encontrados e Resolvidos
+
+Registro dos problemas da integração entre front, back-end e hospedagem, para consulta futura.
+
+| Sintoma | Causa | Solução |
+|---------|-------|---------|
+| Front mostrava "Não foi possível falar com o servidor", mesmo com o Postman funcionando | **CORS**: o `SecurityConfig` tinha uma lista fixa de origens (`localhost:5173` e `seu-front.com`) que se sobrepunha à do `WebConfig` | `SecurityConfig` passou a ler `app.cors.allowed-origins`, a mesma propriedade do `WebConfig` 
+| "CONFIG não foi configurada" no site publicado | Variável sem o prefixo `NEXT_PUBLIC_` (o Next.js não a envia ao navegador) | Voltar ao nome `NEXT_PUBLIC_API_URL` no código, no `.env.local` e na Vercel 
+| Erro de configuração aparecia como "falha de conexão" | `getApiUrl()` era chamada dentro do `try/catch` do `fetch`, que escondia o erro real | Mover a chamada para fora do `try` e registrar a URL com falha no console |
+| Primeira requisição muito lenta | Plano gratuito do Render "dorme" sem acessos | Monitor no UptimeRobot e aviso na documentação |
 
 ---
 
 ## ✨ Melhorias Implementadas
 
 | Recurso | Status | Detalhes |
-|---------|--------|----------|
-| **BCrypt** | ✅ Implementado | Strength 10, salt aleatório |
-| **Spring Security** | ✅ Implementado | Integração completa |
-| **PasswordEncoder** | ✅ Implementado | Injeção de dependência |
-| **JWT** | ✅ Implementado | HS256, 7 dias |
-| **Validação** | ✅ Implementado | Email, senha mínima, nome |
-| **CORS** | ✅ Implementado | Origens autorizadas |
-| **Normalização Email** | ✅ Implementado | Trim + lowercase |
-| **Exceções** | ✅ Implementado | Handler centralizado |
+|---------|:------:|----------|
+| **BCrypt** | ✅ | Strength 10, salt aleatório |
+| **Spring Security** | ✅ | Regras por rota e por perfil |
+| **JWT** | ✅ | HS256, 7 dias, claims `userId` e `role` |
+| **Validação de cadastro** | ✅ | Nome, e-mail e senha mínima |
+| **CORS configurável** | ✅ | Por variável de ambiente, com curinga |
+| **Normalização de e-mail** | ✅ | Trim + minúsculas |
+| **Tratamento de exceções** | ✅ | Handler centralizado |
+| **Upload de imagens** | ✅ | Supabase Storage (até 5 MB) |
+| **Deploy em nuvem** | ✅ | Vercel + Render + Aiven |
+| **Monitoramento** | ✅ | UptimeRobot |
+| **Testes de endpoints** | ✅ | Postman, do local à produção |
 
----
+### Checklist de produção
 
-## 🐛 Problemas Conhecidos Resolvidos
-
-### ✅ ANTES: Senhas em Texto Puro
-**Status**: ✅ **RESOLVIDO** com BCrypt
-
-### Próximos Passos (Roadmap)
-- [ ] Adicionar validação de força de senha (regex)
-- [ ] Implementar refresh tokens
-- [ ] Adicionar rate limiting por IP
-- [ ] Adicionar autenticação de dois fatores (2FA)
-- [ ] Implementar logout com token blacklist
-- [ ] Adicionar log de tentativas de login
-
----
-
-## 🧪 Testes
-
-### Executar testes
-```bash
-./mvnw test
-```
-
-### Cobertura de testes
-```bash
-./mvnw test jacoco:report
-open target/site/jacoco/index.html
-```
-
-### Teste Manual: Registrar e Login
-
-```bash
-# 1. Registrar novo usuário
-curl -X POST http://localhost:8080/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Teste User",
-    "email": "teste@example.com",
-    "password": "testeSenha123"
-  }'
-
-Resposta esperada (201):
-{
-  "id": 1,
-  "name": "Teste User",
-  "email": "teste@example.com",
-  "papel": "USER"
-}
-
-# 2. Fazer login
-curl -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "teste@example.com",
-    "password": "testeSenha123"
-  }'
-
-Resposta esperada (200):
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "usuario": {
-    "id": 1,
-    "name": "Teste User",
-    "email": "teste@example.com",
-    "papel": "USER"
-  }
-}
-
-# 3. Usar token em requisição segura
-curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
-  http://localhost:8080/auth/me
-
-Resposta esperada (200):
-{
-  "id": 1,
-  "name": "Teste User",
-  "email": "teste@example.com",
-  "papel": "USER"
-}
-```
-
----
-
-## 🚀 Deploy em Produção
-
-### Railway (Backend)
-
-1. **Conectar repositório GitHub** no Railway
-2. **Definir variáveis de ambiente** (incluindo JWT_SECRET forte)
-3. **Deploy automático** a cada push em `main`
-
-URL gerada: `https://seu-servico.up.railway.app`
-
-### Vercel (Frontend)
-
-1. **Conectar repositório GitHub** no Vercel
-2. **Configurar**: `NEXT_PUBLIC_API_URL=https://seu-backend.railway.app`
-3. **Deploy automático** a cada push
-
-URL gerada: `https://seu-projeto.vercel.app`
-
+- [ ] `JWT_SECRET` definido no Render (sem ele vale um segredo padrão que está no código-fonte)
+- [ ] `CORS_ALLOWED_ORIGINS` restrito ao domínio do front
+- [ ] `ADMIN_PASSWORD` forte e trocada após o primeiro acesso
+- [ ] Chave `SUPABASE_SERVICE_KEY` apenas no back-end (nunca no front)
 
 
 ## 📄 Licença
@@ -850,23 +871,24 @@ Este projeto está licenciado sob a Licença MIT.
 
 ---
 
-
-
 <div align="center">
 
-**Desenvolvido como projeto final de meu curso de qualificação como programador back-end**
+**Desenvolvido como projeto final do meu curso de qualificação como programador back-end (SENAI)**
 
 *Saborê - Receitas que aproximam*
 
 ![Java](https://img.shields.io/badge/-Java%2021-blue?style=flat-square&logo=java)
 ![Spring](https://img.shields.io/badge/-Spring%20Boot-green?style=flat-square&logo=spring)
 ![Security](https://img.shields.io/badge/-Spring%20Security-brightgreen?style=flat-square&logo=spring)
-![BCrypt](https://img.shields.io/badge/-BCrypt-darkgreen?style=flat-square)
 ![MySQL](https://img.shields.io/badge/-MySQL-blue?style=flat-square&logo=mysql)
+![Aiven](https://img.shields.io/badge/-Aiven-orange?style=flat-square)
 ![Next.js](https://img.shields.io/badge/-Next.js-black?style=flat-square&logo=next.js)
-![Railway](https://img.shields.io/badge/-Railway-0b0d0e?style=flat-square&logo=railway)
+![Render](https://img.shields.io/badge/-Render-46E3B7?style=flat-square&logo=render&logoColor=black)
 ![Vercel](https://img.shields.io/badge/-Vercel-black?style=flat-square&logo=vercel)
+![Supabase](https://img.shields.io/badge/-Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
+![UptimeRobot](https://img.shields.io/badge/-UptimeRobot-green?style=flat-square)
+![Postman](https://img.shields.io/badge/-Postman-FF6C37?style=flat-square&logo=postman&logoColor=white)
 
-*Última atualização: Setembro de 2026 - Com BCrypt Implementado ✅*
+*Última atualização: Outubro de 2026*
 
 </div>
